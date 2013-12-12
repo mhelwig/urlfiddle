@@ -176,7 +176,7 @@ def main():
         if(args.stdout and responseError is None):
             print("\n" + responseText)
         if((args.write or args.screenshot) and not args.head and responseError is None):
-            fopen = open(args.prefix + str(idx) + "." . args.output,"w+")
+            fopen = open(args.prefix + str(idx) + "." + args.output,"w+")
             fopen.write(responseText)
             fopen.flush()
             if(args.screenshot):
