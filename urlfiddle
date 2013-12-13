@@ -61,7 +61,7 @@ def autofuzz(fuzzlen, listlen):
     
 #Command line options
 def parse_args():
-    parser = argparse.ArgumentParser(description="",epilog="Visit the project homepage on http://github.com/mhelwig/urlfiddle if you need more information")
+    parser = argparse.ArgumentParser(description="",epilog="Visit the project homepage on https://github.com/mhelwig/urlfiddle if you need more information")
     parser.add_argument('url', type=str, help='The URL to fiddle', metavar='URL')
     parser.add_argument('-d', '--delay', type=float, help="Delay between calls", metavar='seconds',)
     parser.add_argument('-a', '--set-user-agent', help="Send user agent information with requests")
