@@ -42,7 +42,7 @@ Just run
 ```
 python setup.py install
 ```
-or just checkout the script named "urllib" and do ```$ python urllib```
+or just checkout the script named "urlfiddle" and do ```$ python urlfiddle```
 
 #Usage
 Basic usage is
