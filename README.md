@@ -75,7 +75,7 @@ Here are the available command line options:
   -q, --quiet           Suppress copyright notice
   --stdout              Pass response to stdout
   -H, --head            Only do HEAD requests
-  --set-headers         Print response headers
+  --headers             Print response headers
   -S, --status          Print status code
   -t, --time            Measure response time
   -c SET_COOKIE, --set-cookie SET_COOKIE
@@ -123,7 +123,7 @@ You can use multiple replacements in one url. So you can do:
 ```
 urllib "http://www.example.com/index.php?param1=§1-10§&param2=§f=/path/to/file§&param3=§fuzz=5,2§"
 ```
-which will generate an url for all possible parameter combinations.
+which will generate urls for all possible parameter combinations.
 
 If you just want to see what kind of URLs urlfiddle generates, you can call it with the "-s" option so it will just print out the generated urls.
 
@@ -136,7 +136,9 @@ and urlfiddle will generate the corresponding urls.
 
 #Issues
 
-Please repot any issues to https://github.com/mhelwig/urlfiddle/issues
+* Fuzzing often returns parameters of wrong length if NUMBER * LEN gets larger than the internal character list
+
+Please repot any (further) issues to https://github.com/mhelwig/urlfiddle/issues
 
 #Tasks
 There is still a lot to do:
@@ -144,10 +146,9 @@ There is still a lot to do:
 * Add proxy support
 * Add support for POST requests
 * Add support for manipulating cookie parameters
-* Add threading
 * Add HTTP authentication support
-* Add better fuzzing and character mixing possibilities
-* Add support for filters for single parameter-templates
+* Add threading
+* Add better fuzzing possibilities
+* Add support for filters on single parameters
 * Output error page responses
 * Add support for other response types and protocols
-
