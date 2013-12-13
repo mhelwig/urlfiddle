@@ -9,11 +9,13 @@ http://www.example.com/index.php?page=3
 ```
 etc.
 
-You can also load parameter values and URL templates from files which can be useful for checking different xss injections or generally test a webservers behaviour 
+Furthermore, if you pass in two or more parameters, urlfiddle generates all possible combinations.
 
-The responses can be saved to files, send to stdout or converted to screenshots if you have wkhtmltopdf present. You can show status codes, get an md5 checksum and more (- see available command line parameters).
+You can also load arbitrary parameter values and URL templates from files which can be useful for checking a web application for xss injections, fuzzing, file and directory discovery or generally testing a webservers behaviour on unexpected requests 
 
-There are still some things to do and urlfiddle will only work in basic cases for now (i.e. it will not work when making calls through proxy servers and it does not support HTTP authentication yet). But you can send cookies already.
+The responses can be saved to (text-)files, send to stdout or converted to screenshots if you have wkhtmltopdf present. You can show status codes, get an md5 checksum and more (- see available command line parameters).
+
+There are still many things to do and urlfiddle will only work in basic cases for now (i.e. it will not work when making calls through proxy servers and it does not support HTTP authentication yet). But you can send cookies already.
 
 A typical output may look like this:
 
@@ -40,6 +42,7 @@ Just run
 ```
 python setup.py install
 ```
+or just checkout the script named "urllib" and do ```$ python urllib```
 
 #Usage
 Basic usage is
@@ -105,12 +108,23 @@ For now you basically have two options
 
 * §f=/path/to/file§
 
-    loads the replacement-values from a (line-seperated) file.
+    loads the replacement-values from a (newline-seperated) file.
+    
+* §fuzz=LEN,NUMBER§    
+    
+    EXPERIMENTAL: uses urlfiddles internal (very basic) fuzzing capabilities to generate NUMBER random strings of length LEN where NUMBER and LEN are integer values. Fuzzed parameters get urlencoded by default.
+    Example:
+    ```
+    urlfiddle --urlencode http://www.example.com/index.php?id=§fuzz=4,3§
+    ```
+    generates 3 URLs with 4 character long fuzzing values for the parameter "id".
 
 You can use multiple replacements in one url. So you can do:
 ```
-http://www.example.com/index.php?param1=§1-10§&param2=§f=/path/to/file§&param3=§5-9§
+urllib "http://www.example.com/index.php?param1=§1-10§&param2=§f=/path/to/file§&param3=§fuzz=5,2§"
 ```
+which will generate an url for all possible parameter combinations.
+
 If you just want to see what kind of URLs urlfiddle generates, you can call it with the "-s" option so it will just print out the generated urls.
 
 Note that urlfiddle does not analyse your URLs in any way but treats them as simple strings. So the replacement may occur wherever you want. You can also do
@@ -120,11 +134,20 @@ http://server§1-10§.example.tld
 ```
 and urlfiddle will generate the corresponding urls.
 
+#Issues
+
+Please repot any issues to https://github.com/mhelwig/urlfiddle/issues
+
 #Tasks
-Still a lot to do:
-* Do thorough testing whether all status codes are recognized correctly
+There is still a lot to do:
+* Write unit tests and improve code structure
 * Add proxy support
-* For MD5 option: Output MD5 of error pages
-* Write unit tests and make the code better testable
+* Add support for POST requests
+* Add support for manipulating cookie parameters
 * Add threading
-* Add more replacement possibilities
+* Add HTTP authentication support
+* Add better fuzzing and character mixing possibilities
+* Add support for filters for single parameter-templates
+* Output error page responses
+* Add support for other response types and protocols
+

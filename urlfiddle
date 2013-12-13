@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # coding=UTF-8
-import subprocess, re, sys, argparse, urllib2, signal
+import subprocess, re, sys, argparse, urllib2, signal, httplib
 from time import time,sleep
 from hashlib import md5 
+from random import shuffle
 
 ###########
 # Classes #
@@ -46,10 +47,21 @@ def fiddle(urllist,ex,str_pos,arguments):
             for arg in args:
                 urllist_extended.append(ex.sub(str(arg),url,1))
         return fiddle(urllist_extended,ex, m.pos+1,arguments)
+
+#simple fuzzer function. return a list with listlen elements of length fuzzlen and iterate through source list
+def autofuzz(fuzzlen, listlen):
+    source = ["--",'"','"',">","<","/>","\>","$","%","(",")","*","+",".","\\","`","&",chr(0x00),chr(0x08),chr(0x09),chr(0x0a),chr(0x0d),chr(0x1a)]
+    shuffle(source)
+    fuzzlist = []
+    for i in range(0,listlen):
+        indexStart = i*fuzzlen % len(source)
+        indexEnd = indexStart + fuzzlen
+        fuzzlist.append(urllib2.quote("".join(source[indexStart:indexEnd])))
+    return fuzzlist
     
 #Command line options
 def parse_args():
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description="",epilog="Visit the project homepage on http://github.com/mhelwig/urlfiddle if you need more information")
     parser.add_argument('url', type=str, help='The URL to fiddle', metavar='URL')
     parser.add_argument('-d', '--delay', type=float, help="Delay between calls", metavar='seconds',)
     parser.add_argument('-a', '--set-user-agent', help="Send user agent information with requests")
@@ -63,7 +75,7 @@ def parse_args():
     parser.add_argument('-q', '--quiet',help="Suppress copyright notice",action='store_true')
     parser.add_argument('--stdout',help="Pass response to stdout",action='store_true')
     parser.add_argument('-H','--head',help="Only do HEAD requests",action='store_true')
-    parser.add_argument('--set-headers',help="Print response headers",action='store_true')
+    parser.add_argument('--headers',help="Print response headers",action='store_true')
     parser.add_argument('-S', '--status',help="Print status code",action='store_true')
     parser.add_argument('-t', '--time',help="Measure response time",action='store_true')
     parser.add_argument('-c','--set-cookie',help="Send Cookie with requests")
@@ -86,19 +98,21 @@ def main():
     #Regex expressions
     exNumeric = re.compile(r"§(\d+)\-(\d+)§")
     exFile = re.compile(r"§f=([^§]*)§")
+    exFuzz = re.compile(r"§fuzz=(\d+),(\d+)§")
     
     if not args.quiet:
         print("urlfiddle - url manipulation tool by Michael Helwig (info@jhp-consulting.eu)")
     
     numerics = exNumeric.findall(args.url)
     files = exFile.findall(args.url)
+    fuzzes = exFuzz.findall(args.url)
     
     #Load or generate arguments
-    rangeNumerics= []
+    rangeNumerics = []
     for i in numerics:
         rangeNumerics.append(range(int(i[0]),int(i[1]) +1))
     
-    rangeFiles= []
+    rangeFiles = []
     for infile in files:
         if(args.urlencode):
             lines = [urllib2.quote(line.rstrip("\n")) for line in open(infile)]
@@ -106,6 +120,12 @@ def main():
         else:
             lines = [line.rstrip("\n") for line in open(infile)]
             rangeFiles.append(lines)
+    
+    if(len(fuzzes) > 0 and not args.urlencode):
+        print "Notice: Fuzzed parameters are urlencoded by default."
+    rangeFuzz = []
+    for param in fuzzes:
+        rangeFuzz.append(autofuzz(int(param[0]),int(param[1])))
     
     #Load urls
     urllist = []
@@ -118,6 +138,7 @@ def main():
     #Generate urls
     urllist = fiddle(urllist,exNumeric,0,rangeNumerics)
     urllist = fiddle(urllist,exFile,0,rangeFiles)
+    urllist = fiddle(urllist,exFuzz,0,rangeFuzz)
     
     #Do the calls
     for idx, url in enumerate(urllist):
@@ -130,6 +151,7 @@ def main():
         responseStartTime = 0
         responseTime = 0
         responseError = None
+        responseErrorText = None
         responseText = None
         
         redirectHandler = CustomRedirectHandler()
@@ -151,21 +173,28 @@ def main():
             responseText = response.read()
         except urllib2.URLError as e:
                 responseError = e
+                responseErrorText = str(e.code)
+        except httplib.HTTPException as e:
+                responseError = e
+                responseErrorText = e.__class__.__name__
+        except urllib2.URLError as e:
+            print("Invalid URL. Try to encode your parameters with --urlencode")
         if(args.time):
             responseTime = time() - responseStartTime
         if(args.status):
             sys.stdout.write("\t")
-            if responseError is None:
+            if responseErrorText is None:
                 try:
                     sys.stdout.write(str(response.status))
                 except AttributeError:
                     sys.stdout.write(str(response.getcode()))
                     
             else:
-                sys.stdout.write(str(e.code))
+                sys.stdout.write(responseErrorText)
         if(args.time):
             sys.stdout.write("\t" + str(responseTime))
-        if(args.set_headers and responseError is None):
+        if(args.headers and responseError is None):
+            sys.stdout.write("\n")
             print response.info()
         if(args.md5 and responseError is None):
             m = md5()
