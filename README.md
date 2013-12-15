@@ -1,5 +1,5 @@
 #About
-urlfiddle is a python script which generates URLs from templates and calls them.
+urlfiddle is a simple url generation and scanning tool.
 
 For example you can easily generate URLs with numerical parameters like
 ```
@@ -7,9 +7,9 @@ http://www.example.com/index.php?page=1
 http://www.example.com/index.php?page=2
 http://www.example.com/index.php?page=3
 ```
-etc.
+etc and analyse what happens if you call them.
 
-Furthermore, if you pass in two or more parameters, urlfiddle generates all possible combinations.
+Furthermore, if you pass in two or more parameters, urlfiddle generates all possible combinations (and calls them by default).
 
 You can also load arbitrary parameter values and URL templates from files which can be useful for checking a web application for xss injections, fuzzing, file and directory discovery or generally testing a webservers behaviour on unexpected requests 
 
@@ -42,7 +42,6 @@ Just run
 ```
 python setup.py install
 ```
-or just checkout the script named "urlfiddle" and do ```$ python urlfiddle```
 
 #Usage
 Basic usage is
@@ -89,9 +88,9 @@ Here are the available command line options:
 
 ```
 
-#URL formats and replacements
-Values that should be generated or replaced by urlfiddle should be wrapped in §-signs.
-For now you basically have two options
+#URL formats and placeholders
+Placeholders that should be replaced by urlfiddle should be wrapped in §-signs.
+For now you basically have these options
 * §START-END§
 
     where START and END are integer values, e.g.
@@ -119,7 +118,7 @@ For now you basically have two options
     ```
     generates 3 URLs with 4 character long fuzzing values for the parameter "id".
 
-You can use multiple replacements in one url. So you can do:
+You can use multiple placeholders in one url. So you can do:
 ```
 urllib "http://www.example.com/index.php?param1=§1-10§&param2=§f=/path/to/file§&param3=§fuzz=5,2§"
 ```
@@ -137,18 +136,19 @@ and urlfiddle will generate the corresponding urls.
 #Issues
 
 * Fuzzing often returns parameters of wrong length if NUMBER * LEN gets larger than the internal character list
+* Importing urls from files not working since only the placeholders of the url argument get parsed
 
 Please repot any (further) issues to https://github.com/mhelwig/urlfiddle/issues
 
 #Tasks
 There is still a lot to do:
-* Write unit tests and improve code structure
+* Write more unit tests
 * Add proxy support
 * Add support for POST requests
 * Add support for manipulating cookie parameters
 * Add HTTP authentication support
 * Add threading
 * Add better fuzzing possibilities
-* Add support for filters on single parameters
+* Add support for filters on single placeholders
 * Output error page responses
 * Add support for other response types and protocols
