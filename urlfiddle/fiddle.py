@@ -65,3 +65,22 @@ class Fiddle:
         for param in fuzzes:
             rangeFuzz.append(self.autofuzz(int(param[0]), int(param[1])))
         return rangeFuzz
+    
+    # Detect any kind of placeholders. Convenience function for calling all of the detection methods above
+    def detectPlaceholders(self,url, urlencode = False):
+        numerics = self.detectNumerics(url);
+        fuzz = self.detectFuzz(url);
+        files = self.detectFiles(url, urlencode)
+        return {'numerics':numerics,'fuzz':fuzz,'files':files}
+    
+    # Convenience function for generating all possible combinations to a given string or url with placeholders
+    def generateAll(self,placeholderString,urlencode = False):
+        placeholders = self.detectPlaceholders(placeholderString, urlencode)
+        resultList = [placeholderString]
+        if 'numerics' in placeholders:
+            resultList = self.generate(resultList, self.exNumeric, 0, placeholders["numerics"])
+        if 'files' in placeholders:
+            resultList = self.generate(resultList, self.exFile, 0, placeholders["files"])
+        if 'fuzz' in placeholders:
+            resultList = self.generate(resultList, self.exFuzz, 0, placeholders["fuzz"])
+        return resultList

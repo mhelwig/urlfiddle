@@ -10,6 +10,9 @@ setup(name='urlfiddle',
       url='https://github.com/mhelwig/urlfiddle',
       license='MIT',
       scripts=['bin/urlfiddle'],
+      extras_require = {
+        'analyze':  ["BeautifulSoup"]
+      },
       packages=find_packages(exclude=('test')),
       
 )

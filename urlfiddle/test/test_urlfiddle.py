@@ -35,5 +35,10 @@ class TestUrlfiddle(unittest.TestCase):
         self.assertEqual(files, ['myfile.txt'])
         self.assertEqual(fuzzes, [('2', '3')])
     
+    def testGenerateAll(self):
+        paramString = "param1=§1-2§&param2=§f=./urlfiddle/test/data/testfile1.txt§&param3=§fuzz=2,3§"
+        paramValues = self.fiddle.generateAll(paramString, True)
+        
+        self.assertEqual(12,len(paramValues))
 if __name__ == '__main__':
     unittest.main()
