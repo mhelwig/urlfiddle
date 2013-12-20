@@ -40,9 +40,15 @@ class Fiddle:
     # Detect numeric placeholders
     def detectNumerics(self, url):
         numerics = self.exNumeric.findall(url)
+        
         rangeNumerics = []
+        
         for i in numerics:
-            rangeNumerics.append(range(int(i[0]), int(i[1]) + 1))
+            start = int(i[0])
+            end = int(i[1]) +1
+            digits = len(i[0])
+            values = range(start,end)
+            rangeNumerics.append([str(number).zfill(digits) for number in values])
         return rangeNumerics
     
     # Detect file placeholders

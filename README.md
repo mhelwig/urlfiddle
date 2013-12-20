@@ -56,36 +56,44 @@ urlfiddle -h
 ```
 gives an overview over available command line arguments. You always need to pass at least the positional URL parameter, even when loading URLs from file via the -f option.
 Here are the available command line options:
+
 ```
+optional arguments:
   -h, --help            show this help message and exit
   -d seconds, --delay seconds
                         Delay between calls
-  -a SET_USER_AGENT, --set-user-agent SET_USER_AGENT
-                        Send user agent information with requests
-  -p Prefix, --prefix Prefix
-                        Prefix of output files
-  -o Suffix, --output Suffix
-                        Suffix of output files (default "html")
+  -a USER_AGENT, --set-user-agent USER_AGENT
+                        Send user agent information with requests (e.g.
+                        Mozilla/5.0)
+  -M, --mime-type       Print MIME content type header (if detected)
+  --prefix Prefix       Prefix of output files
+  -o Suffix, --output-dir Suffix
+                        Output directory
   -s, --silent          Silent mode: Just print out urls and do not call them
   -u, --urlencode       urlencode parameter values
   -5, --md5             Output the MD5 value of responses
   -r, --no-redirect     Do NOT follow redirects
   -f FILE, --file FILE  Process urls from file
+  -p DATA, --set-post DATA
+                        POST data to send with the request
   -q, --quiet           Suppress copyright notice
   --stdout              Pass response to stdout
   -H, --head            Only do HEAD requests
   --headers             Print response headers
   -S, --status          Print status code
   -t, --time            Measure response time
-  -c SET_COOKIE, --set-cookie SET_COOKIE
+  -c VALUES, --set-cookie VALUES
                         Send Cookie with requests
+  -P Number, --processes Number
+                        Number of processes to use for starting requests in
+                        parallel. Should not be larger than the number of
+                        (generated) URLs you expect.
   --screenshot /path/to/wkhtmltoimage
                         Take screenshot using wkhtmltoimage. You have to
                         provide the path to the binary as argument here.
                         Implies --write.
-  -w, --write           Write output to file
-
-
+  -w, --write           Write output to file. urlfiddle tries to detects
+                        filetypes automatically based on MIME headers.
 ```
 
 #URL formats and placeholders
@@ -104,6 +112,8 @@ For now you basically have these options
     ...
     http://www.example.com/index.php?page=10
     ```
+    
+    You can generate numeric values of fixed length if you prefix START with leading zeros. E.g. §001-100§ generates all numbers with 3 digits length and leading zeros.
 
 * §f=/path/to/file§
 
@@ -126,29 +136,32 @@ which will generate urls for all possible parameter combinations.
 
 If you just want to see what kind of URLs urlfiddle generates, you can call it with the "-s" option so it will just print out the generated urls.
 
-Note that urlfiddle does not analyse your URLs in any way but treats them as simple strings. So the replacement may occur wherever you want. You can also do
+Urlfiddle does not analyse your URLs in any way but treats them as simple strings. So the replacement may occur wherever you want. You can also do
 
 ```
 http://server§1-10§.example.tld
 ```
 and urlfiddle will generate the corresponding urls.
 
+Furthermore, all generation mechanisms also apply to POST and COOKIE values which you can send with your requests. Calling urlfiddle with the following options will generate 10 requests, sending param=1, ... , param=10 in the POST body:
+```
+$ urlfiddle -p param=§1-10§ "http://www.example.com/index.php"
+```
+
 #Issues
 
 * Fuzzing often returns parameters of wrong length if NUMBER * LEN gets larger than the internal character list
-* Importing urls from files not working since only the placeholders of the url argument get parsed
+* Importing urls from files is not working since only the placeholders of the url argument get parsed
+* You cannot run more processes than the number of urls that you call. Even if you call one url with hundreds of different POST parameters, you cannot start more than one process for now
 
-Please repot any (further) issues to https://github.com/mhelwig/urlfiddle/issues
+Please report any (further) issues to https://github.com/mhelwig/urlfiddle/issues
 
 #Tasks
 There is still a lot to do:
 * Write more unit tests
+* Add some kind of form detection
 * Add proxy support
-* Add support for POST requests
-* Add support for manipulating cookie parameters
 * Add HTTP authentication support
-* Add threading
 * Add better fuzzing possibilities
 * Add support for filters on single placeholders
 * Output error page responses
-* Add support for other response types and protocols

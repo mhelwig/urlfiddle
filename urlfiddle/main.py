@@ -47,7 +47,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="", epilog="Visit the project homepage on https://github.com/mhelwig/urlfiddle if you need more information")
     parser.add_argument('url', type=str, help='The URL to fiddle', metavar='URL')
     parser.add_argument('-d', '--delay', type=float, help="Delay between calls", metavar='seconds',)
-    parser.add_argument('-a', '--set-user-agent', help="Send user agent information with requests")
+    parser.add_argument('-a', '--set-user-agent', help="Send user agent information with requests (e.g. Mozilla/5.0)", metavar="USER-AGENT")
     parser.add_argument('-M', '--mime-type', help="Print MIME content type header (if detected)", action='store_true')
     parser.add_argument('--prefix', help="Prefix of output files", metavar='Prefix', default='')
     parser.add_argument('-o', '--output-dir', help="Output directory", metavar='Suffix')
@@ -57,18 +57,18 @@ def parse_args():
     parser.add_argument('-r', '--no-redirect', help="Do NOT follow redirects", action='store_true')
     parser.add_argument('-f', '--file', help="Process urls from file")
 #    parser.add_argument('-F', '--detect-forms', help="autodetect forms", action='store_true') #Not yet implemented
-    parser.add_argument('-p', '--set-post', help="POST data to send with the request")
+    parser.add_argument('-p', '--set-post', help="POST data to send with the request",metavar="DATA")
     parser.add_argument('-q', '--quiet', help="Suppress copyright notice", action='store_true')
     parser.add_argument('--stdout', help="Pass response to stdout", action='store_true')
     parser.add_argument('-H', '--head', help="Only do HEAD requests", action='store_true')
     parser.add_argument('--headers', help="Print response headers", action='store_true')
     parser.add_argument('-S', '--status', help="Print status code", action='store_true', default=True)
     parser.add_argument('-t', '--time', help="Measure response time", action='store_true')
-    parser.add_argument('-c', '--set-cookie', help="Send Cookie with requests")
+    parser.add_argument('-c', '--set-cookie', help="Send Cookie with requests", metavar="VALUES")
 #   parser.add_argument('-c', '--set-header', help="set arbitrary header value") #Not yet implemented
-    parser.add_argument('-P', '--processes', type=int, help="Number of processes to use for starting requests in parallel. EXPERIMENTAL", default=1)
+    parser.add_argument('-P', '--processes', type=int, help="Number of processes to use for starting requests in parallel. Should not be larger than the number of (generated) URLs you expect.", metavar="Number", default=1)
     parser.add_argument('--screenshot', help="Take screenshot using wkhtmltoimage. You have to provide the path to the binary as argument here. Implies --write.", metavar='/path/to/wkhtmltoimage')
-    parser.add_argument('-w', '--write', help="Write output to file", action="store_true")
+    parser.add_argument('-w', '--write', help="Write output to file. urlfiddle tries to detects filetypes automatically based on MIME headers.", action="store_true")
     
     args = parser.parse_args()
     return args
@@ -215,7 +215,7 @@ class Client(multiprocessing.Process):
                 responseText = response.read()
             except urllib2.URLError as e:
                     responseError = e
-                    responseErrorText = str(e.code)
+                    responseErrorText = "Invalid URL"
             except httplib.HTTPException as e:
                     responseError = e
                     responseErrorText = e.__class__.__name__
