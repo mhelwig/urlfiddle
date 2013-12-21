@@ -9,7 +9,7 @@ from fiddle import Fiddle
 # GLOBALS #
 ###########
 
-running_threads = []
+running_processes = []
 
 ###########
 # Classes #
@@ -36,11 +36,9 @@ class CustomRedirectHandler(urllib2.HTTPRedirectHandler):
 
 # Exit cleanly on keyboard interrupt
 def exithandler(signum, frame):
-    for t in running_threads:
+    for t in running_processes:
         t.terminate()
     sys.exit(0)
-
-
     
 # Command line options
 def parse_args():
@@ -50,7 +48,7 @@ def parse_args():
     parser.add_argument('-a', '--set-user-agent', help="Send user agent information with requests (e.g. Mozilla/5.0)", metavar="USER-AGENT")
     parser.add_argument('-M', '--mime-type', help="Print MIME content type header (if detected)", action='store_true')
     parser.add_argument('--prefix', help="Prefix of output files", metavar='Prefix', default='')
-    parser.add_argument('-o', '--output-dir', help="Output directory", metavar='Suffix')
+    parser.add_argument('-o', '--output-dir', help="Output directory", metavar='DIRECTORY')
     parser.add_argument('-s', '--silent', help="Silent mode: Just print out urls and do not call them", action='store_true')
     parser.add_argument('-u', '--urlencode', help="urlencode parameter values", action='store_true')
     parser.add_argument('-5', '--md5', help="Output the MD5 value of responses", action='store_true')
@@ -117,7 +115,7 @@ def main():
     if args.processes:
         listSize = int(math.ceil(len(urllist) / args.processes))
     
-    global running_threads
+    global running_processes
     
     offset = 0
     
@@ -127,14 +125,14 @@ def main():
         for i in range(1, args.processes + 1):
             partialList = urllist[offset:offset + listSize]
             new_thread = Client(partialList, args, cookieParams, postParams, queue,offset)
-            running_threads.append(new_thread)
+            running_processes.append(new_thread)
             new_thread.start()
             offset += listSize
     else:
         c = Client(urllist, args, cookieParams, postParams)
         c.run()
     
-    for t in running_threads: 
+    for t in running_processes: 
         t.join()
     
          
@@ -144,7 +142,7 @@ class Client(multiprocessing.Process):
             multiprocessing.Process.__init__(self)
             self.queue = queue
             self.counter = 0
-            self.lock = multiprocessing.RLock()
+            self.lock = multiprocessing.Lock()
             self.urllist = urllist
             self.args = args
             self.cookieParams = cookieParams
@@ -179,9 +177,12 @@ class Client(multiprocessing.Process):
     # Function to do the actual call
     def call(self, url, args, idx=0, post=None, cookie=None, offset=0):
             self.lock.acquire()
-            
-            self.counter = self.queue.get()
-            
+            counter = self.queue.get()
+            if(counter == "EXIT"):
+                self.queue.put("EXIT")
+                sys.exit(1)
+            else:
+                self.counter = counter
             output = "[" + str(self.counter) + "]\t" + url
             response = None
             responseStartTime = 0
@@ -215,13 +216,17 @@ class Client(multiprocessing.Process):
                 responseText = response.read()
             except urllib2.URLError as e:
                     responseError = e
-                    responseErrorText = "Invalid URL"
+                    if(hasattr(e,'code') and e.code is not None):
+                        responseErrorText = str(e.code)
+                    else:
+                        print("Invalid URL. Check URL or try to encode your parameters with --urlencode")
+                        self.queue.put("EXIT")
+                        sys.exit(1)
+                        return
+                        
             except httplib.HTTPException as e:
                     responseError = e
                     responseErrorText = e.__class__.__name__
-            except urllib2.URLError as e:
-                print("Invalid URL. Try to encode your parameters with --urlencode")
-                exit()
             if(args.time):
                 responseTime = time() - responseStartTime
             if(args.status):
